@@ -376,8 +376,6 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      name: Authorization
-      in: header
       description: Авторизация по токену сгенерированному при инициализации клиента
   schemas:
     Device:
@@ -632,7 +630,7 @@ components:
           description: Изображение в формате data
       example:
         code: 0
-        branches: [ { name: "Название филиала", address: "Адрес", working: "часы и дни работы", contacts: [ { type:"Phone", value:"+998..." } ], lat: 0, lng: 1 } ]
+        branches: [ ]
 
     BanksBranchesResponseItems:
       type: object
