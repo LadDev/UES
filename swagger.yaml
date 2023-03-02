@@ -1,0 +1,602 @@
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: "UzEx Api Server"
+  description: "API проекта UzEx предназначено для клиентской части и предоставляет возможность получения информации о курсах валют. Клиентская часть API проекта UzEx позволяет разработчикам интегрировать данные проекта UzEx в приложения проекта.\n\nДля получения информации о курсах валют, клиенты могут использовать запросы GET/POST и передавать параметры, такие как валютная пара.\n\nAPI проекта UzEx поддерживает форматы данных JSON, что обеспечивает гибкость и удобство использования для различных приложений и платформ. Также проект UzEx обеспечивает безопасность клиентской части API путем использования протокола HTTPS и аутентификации клиентов.\n\nВ общем, API проекта UzEx предоставляет мощный и удобный функционал для работы с курсами валют."
+  contact:
+    name: "LadDev"
+    email: "laddev.site@inbox.lv"
+  license:
+    name: "© UzEx. All rights reserved"
+externalDocs:
+    description: "GitHub repository"
+    url: "https://github.com/LadDev/UzEx-Server-Api"
+servers:
+  - url: "https://client.uz-ex.app"
+  - url: "https://control.uz-ex.app"
+  - url: "http://localhost:5001"
+  - url: "http://localhost:5002"
+
+paths:
+  /client/api/ping:
+    post:
+      tags:
+        - Client main API
+      summary: При получении запроса, код возвращает статус ответа 200 вместе с объектом JSON, содержащим поля code, data и message.
+      x-order: 0
+      responses:
+        200:
+          description: Возвращается сообщение PONG
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: number
+                    description: Код указывающий на отсутствие ошибок или на их наличие
+                  data:
+                    type: string
+                    description: сообщение PONG, свидетельствует об успешном выполнении запроса
+                  message:
+                    type: string
+                    description: сообщение PONG, свидетельствует об успешном выполнении запроса
+                example:
+                  code: 1
+                  data: "pong"
+                  message: "pong"
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/device-init:
+    post:
+      tags:
+        - Client main API
+      summary: инициализация пользователя по системным данным возвращается json ответ содержащий уникальный token пользователя, а так же первоначальную информацию о котировках (список валют, котировки к валютам) в каждом возвращаемом JSON ответе содержится объект config в котором может содержаться информация о новом сервере и другая системная информация.
+      x-order: 1
+      requestBody:
+        description: "Данные устройства клиента"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Device"
+      responses:
+        200:
+          description: Возвращается уникальный токен устройства для авторизации при выполнении запросов к API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeviceResponse"
+
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/userset/lang:
+    post:
+      tags:
+        - Client main API
+      summary: установка языка интерфейса пользовательского интерфейса
+      x-order: 2
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserSetLang"
+
+      responses:
+        200:
+          description: Ничего не возвращается кроме кода об успешном выполнении запроса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSetResponse"
+
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        404:
+          description: В случае если пользователь не найден
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/userset/nootifier:
+    post:
+      tags:
+        - Client main API
+      summary: в случае если пользователь разрешил получение PUSH уведомлений присылается пользовательский токен для отправки уведомлений
+      x-order: 3
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserSetNotifier"
+
+      responses:
+        200:
+          description: Ничего не возвращается кроме кода об успешном выполнении запроса
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSetResponse"
+
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        404:
+          description: В случае если пользователь не найден
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/init-data:
+    get:
+      tags:
+        - Client main API
+      summary: Данный запрос запрашивает из базы данных заранее сохраненный кеш данных, который содержит такую информацию как (Список банков, Список криптовалют, Список фиатных валют и их курс на момент сохранения, список котировок черного курса на момент сохранения)
+      x-order: 5
+      security:
+        - bearerAuth: [ ]
+      responses:
+        200:
+          description: Возвращает объект содержащий полную информацию из кеша базы данных
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetCacheDataResponse"
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/app-data:
+    get:
+      tags:
+        - Client main API
+      summary: Данный запрос запрашивает из базы данных заранее сохраненный кеш данных, который содержит такую информацию как (Список банков, Список криптовалют, Список фиатных валют и их курс на момент сохранения, список катировок черного курса на момент сохранения)
+      x-order: 4
+      security:
+        - bearerAuth: [ ]
+      responses:
+        200:
+          description: Возвращает объект содержащий полную информацию из кеша базы данных
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetCacheDataResponse"
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/street/history/{ccy}:
+    get:
+      tags:
+        - Client StreetRates API
+      summary: история изменения цены на улице
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: ccy
+          required: true
+          description: Символ фиатной валюты. Например USD
+          schema:
+            type: string
+      responses:
+        200:
+          description: Возвращает массив изменения цены для определенной фиатной валюты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreetRatesHistoryResponse"
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        404:
+          description: В случае если фиатная валюта не найдена запрос прерывается
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/banks/list:
+    get:
+      tags:
+        - Client banks API
+      summary: При получении запроса, код выполняет поиск всех банков в базе данных и создает массив banksList, в котором каждый элемент является объектом, содержащим информацию о каждом банке, включая название, логотип, курсы валют, контакты, адрес, координаты местоположения, сайт и т.д.
+      security:
+        - bearerAuth: [ ]
+      responses:
+        200:
+          description: Возвращается массив содержащий список доступных банков
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BankListResponse"
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/banks/images/{name}:
+    get:
+      tags:
+        - Client banks API
+      summary: возвращает главное изобращение для описания банка
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: name
+          required: true
+          description: Название банка которое в списке банков передается в поле "name"
+          schema:
+            type: string
+      responses:
+        200:
+          description: Возвращается главное изображение банка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BankImageResponse"
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        404:
+          description: В случае если банк не был найден по названию возвращается ошибка
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/banks/branches/{name}:
+    get:
+      tags:
+        - Client banks API
+      summary: возвращает список филиалов конкретного банка
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: name
+          required: true
+          description: Название банка которое в списке банков передается в поле "name"
+          schema:
+            type: string
+      responses:
+        200:
+          description: Возвращается массив содержащий филиалы определенного банка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BanksBranchesResponse"
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        404:
+          description: В случае если банк не был найден по названию возвращается ошибка
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/crypto/list:
+    get:
+      tags:
+        - Client crypto API
+      summary: При получении запроса, код выполняет поиск всех криптовалют в базе данных и создает массив crypto, в котором каждый элемент является объектом, содержащим информацию о каждой криптовалюте, включая название, символ, цену, изменение цены, наивысшую и наименьшую цену за день, изображение и т.д.
+      security:
+        - bearerAuth: [ ]
+      responses:
+        200:
+          description: Возвращается массив содержащий список доступных криптовалют
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CryptoListResponse"
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/crypto/history/{symbol}:
+    get:
+      tags:
+        - Client crypto API
+      summary: Данный запрос возвращает массив изменения цены для определенной криптовалюты
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: path
+          name: symbol
+          required: true
+          description: Символ криптовалюты. Например BTC
+          schema:
+            type: string
+      responses:
+        200:
+          description: Возвращает массив изменения цены для определенной криптовалюты
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CryptoHistoryResponse"
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        404:
+          description: В случае если криптовалюта не найдена запрос прерывается
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/ads:
+    post:
+      tags:
+        - Client Ads
+      summary: При получении запроса, код ищет в базе данных все объявления, у которых значение поля "screen" равно переданному параметру screen, и значение поля "active" равно true. Затем код проверяет, является ли операционная система клиента (os) одной из поддерживаемых операционных систем, указанных в поле "platform" каждого объявления в базе данных, и если os поддерживается и формат рекламы не является "full_screen", то соответствующее объявление добавляется в массив ads.
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdsRequest"
+      responses:
+        200:
+          description: Возвращается массив содержащий рекламные материалы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdsResponse"
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+  /client/api/ads-full-screen:
+    post:
+      tags:
+        - Client Ads
+      summary: При получении запроса, код ищет в базе данных все объявления, у которые соответствуют формату "full_screen", а значение поля "active" равно true. Затем код проверяет, является ли операционная система клиента (os) одной из поддерживаемых операционных систем, указанных в поле "platform" каждого объявления в базе данных, и если os поддерживается и формат рекламы не является "full_screen", то соответствующее объявление добавляется в массив ads.
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdsFullScreenRequest"
+      responses:
+        200:
+          description: Возвращается массив содержащий рекламные материалы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdsFullScreenResponse"
+        401:
+          description: Если при запросе отсутствует заголовок BrearToken или токен не прошел проверку то запрос будет отклонен
+        500:
+          description: В случае возникновения ошибки возвращается код 500
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      name: Authorization
+      in: header
+      description: Авторизация по токену сгенерированному при инициализации клиента
+  schemas:
+    Device:
+      type: object
+      properties:
+        uid:
+          type: string
+          description: уникальный идентификатор устройства
+        lang:
+          type: string
+          description: язык системы
+        platform:
+          type: string
+          description: тип платформы (ios,android)
+        device:
+          type: string
+          description: тип устройства
+      required:
+        - uid
+        - lang
+        - platform
+        - device
+    DeviceResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          description: Код указывающий на отсутствие ошибок или на их наличие
+        token:
+          type: string
+          description: Строка с токеном который в дальнейшем обеспечивает авторизацию устройства в запросах к API
+        message:
+          type: string
+          description: Сообщение об успешной регистрации устройства
+        config:
+          type: object
+          description: Объект конфигурации, который может заменять адрес сервера API для балансировки нагрузки на сервер
+      example:
+        code: 1
+        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySUQiOiI2M2RhNTZjMDUwY2JjYjM4MjEzYjk5NzgiLCJpYXQ"
+        message: "Registration completed successfully"
+        config:
+          server: "https://..."
+
+    UserSetLang:
+      type: object
+      properties:
+        locale:
+          type: string
+          description: новый язык интерфейса
+    UserSetResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          description: Код указывающий на отсутствие ошибок или на их наличие
+      example:
+        code: 0
+
+    UserSetNotifier:
+      type: object
+      properties:
+        userID:
+          type: string
+          description: идентификатор пользователя в системе OneSignal
+        pushToken:
+          type: string
+          description: токен в экосистеме операционной системе для отправки пуша конкретному пользователю
+        os_type:
+          type: string
+          description: тип операционной системы iOS/Android
+
+    GetCacheDataResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          description: Код указывающий на отсутствие ошибок или на их наличие
+        rates:
+          type: array
+          description: Массив объектов содержащие информацию о курсе фиатных валют на улицах
+        cb_rates:
+          type: array
+          description: Массив объектов содержащие информацию о курсе фиатных в Центральном банке
+        banks:
+          type: array
+          description: Массив объектов банков и информацию о каждом банке
+        crypto:
+          type: array
+          description: Массив объектов криптовалют
+      example:
+        code: 0
+        rates: [ { ccy: "USD", nominal: 1, rate: 11000, diff: 50, rateSell: 11100, diffSell: 33 } ]
+        cb_rates: [ { ccy: "USD", ccynm_en: "US Dollar", ccynm_ru: "Доллар США", ccynm_uz: "Доллар США", nominal: 1, rate: 1090, diff: 40, isFavorite: true|false } ]
+        banks: [ { name: "Kapitalbank", logo: "data:image/png;base64,...", per_buy: 0.25, per_sell: 0.27, contacts: [ ], address: "Tashkent....", location: [ 0.000,1.1111 ], rates: [ "RUB","USD","EUR" ], site: "https://....",  isFavorite: true|false } ]
+        crypto: [ { name: "Bitcoin", symbol: "BTC", price: 25000.11, change: 2, high: 26000.1, low: 22000.5, image: "https://www.cryptocompare.com/....", isFavorite: true|false, active: true|false } ]
+
+    StreetRatesHistoryResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          description: Код указывающий на отсутствие ошибок или на их наличие
+        history:
+          type: array
+          description: Массив изменения цены для определенной криптовалюты
+      example:
+        code: 0
+        history: [ 10000,9900,11000,15000 ]
+
+    BankListResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          description: Код указывающий на отсутствие ошибок или на их наличие
+        banks:
+          type: array
+          description: Массив объектов банков и информацию о каждом банке
+      example:
+        code: 0
+        banks: [ { name: "Kapitalbank", logo: "data:image/png;base64,...", per_buy: 0.25, per_sell: 0.27, contacts: [ ], address: "Tashkent....", location: [ 0.000,1.1111 ], rates: [ "RUB","USD","EUR" ], site: "https://....",  isFavorite: true|false } ]
+
+    BankImageResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          description: Код указывающий на отсутствие ошибок или на их наличие
+        image:
+          type: string
+          description: Изображение в формате data
+      example:
+        code: 0
+        image: "data:image/png;base64,..."
+
+    BanksBranchesResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          description: Код указывающий на отсутствие ошибок или на их наличие
+        branches:
+          type: array
+          description: Изображение в формате data
+      example:
+        code: 0
+        branches: [ { name: "Название филиала", address: "Адрес", working: "часы и дни работы", contacts: [ { type:"Phone", value:"+998..." } ], lat: 0, lng: 1 } ]
+
+    CryptoListResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          description: Код указывающий на отсутствие ошибок или на их наличие
+        crypto:
+          type: array
+          description: Массив объектов криптовалют
+      example:
+        code: 0
+        crypto: [ { name: "Bitcoin", symbol: "BTC", price: 25000.11, change: 2, high: 26000.1, low: 22000.5, image: "https://www.cryptocompare.com/....", isFavorite: true|false, active: true|false } ]
+
+    CryptoHistoryResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          description: Код указывающий на отсутствие ошибок или на их наличие
+        history:
+          type: array
+          description: Массив изменения цены для определенной криптовалюты
+      example:
+        code: 0
+        history: [ 23000,22000,25000,65000 ]
+
+    AdsRequest:
+      type: object
+      properties:
+        os:
+          type: string
+          description: Указывает от какой операционной системы сделан запрос iOS/Android
+        screen:
+          type: string
+          description: Указывает для какого экрана был зделан запрос для рекламы
+
+    AdsResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          description: Код указывающий на отсутствие ошибок или на их наличие
+        ads:
+          type: array
+          description: Массив рекламных объявлений
+      example:
+        code: 1
+        ads: [ { "link": "https://adslink", "image": "data:image/png;base64,...", "format": "full_screen" } ]
+
+    AdsFullScreenRequest:
+      type: object
+      properties:
+        os:
+          type: string
+          description: Указывает от какой операционной системы сделан запрос iOS/Android
+        screen:
+          type: string
+          description: Указывает для какого экрана был сделан запрос для рекламы
+
+    AdsFullScreenResponse:
+      type: object
+      properties:
+        code:
+          type: number
+          description: Код указывающий на отсутствие ошибок или на их наличие
+        ads:
+          type: array
+          description: Массив рекламных объявлений
+      example:
+        code: 1
+        ads: [ { "link": "https://adslink", "image": "data:image/png;base64,...", "format": "full_screen" } ]
