@@ -12,10 +12,7 @@ externalDocs:
     description: "GitHub repository"
     url: "https://github.com/LadDev/UzEx-Server-Api"
 servers:
-  - url: "https://client.uz-ex.app"
-  - url: "https://control.uz-ex.app"
   - url: "http://localhost:5001"
-  - url: "http://localhost:5002"
 
 paths:
   /client/api/ping:
