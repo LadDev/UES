@@ -13,6 +13,7 @@ externalDocs:
     url: "https://github.com/LadDev/UzEx-Server-Api"
 servers:
   - url: "http://localhost:5001"
+  - url: "http://localhost:5002"
 
 paths:
   /client/api/ping:
@@ -457,15 +458,23 @@ components:
           description: Код указывающий на отсутствие ошибок или на их наличие
         rates:
           type: array
+          items:
+            $ref: "#/components/schemas/StreetRatesItems"
           description: Массив объектов содержащие информацию о курсе фиатных валют на улицах
         cb_rates:
           type: array
+          items:
+            $ref: "#/components/schemas/CBRatesItems"
           description: Массив объектов содержащие информацию о курсе фиатных в Центральном банке
         banks:
           type: array
+          items:
+            $ref: "#/components/schemas/BankListResponseItems"
           description: Массив объектов банков и информацию о каждом банке
         crypto:
           type: array
+          items:
+            $ref: "#/components/schemas/CryptoListResponseItems"
           description: Массив объектов криптовалют
       example:
         code: 0
@@ -473,6 +482,56 @@ components:
         cb_rates: [ { ccy: "USD", ccynm_en: "US Dollar", ccynm_ru: "Доллар США", ccynm_uz: "Доллар США", nominal: 1, rate: 1090, diff: 40, isFavorite: true|false } ]
         banks: [ { name: "Kapitalbank", logo: "data:image/png;base64,...", per_buy: 0.25, per_sell: 0.27, contacts: [ ], address: "Tashkent....", location: [ 0.000,1.1111 ], rates: [ "RUB","USD","EUR" ], site: "https://....",  isFavorite: true|false } ]
         crypto: [ { name: "Bitcoin", symbol: "BTC", price: 25000.11, change: 2, high: 26000.1, low: 22000.5, image: "https://www.cryptocompare.com/....", isFavorite: true|false, active: true|false } ]
+
+    CBRatesItems:
+      type: object
+      properties:
+        ccy:
+          type: string
+          description: "Обозначение валюты"
+        ccynm_en:
+          type: string
+          description: "Название валюты на английском языке"
+        ccynm_ru:
+          type: string
+          description: "Название валюты на русском языке"
+        ccynm_uz:
+          type: string
+          description: "Название валюты на узбекском языке"
+        nominal:
+          type: string
+          description: "Nominal"
+        rate:
+          type: number
+          description: "Цена покупки"
+        diff:
+          type: number
+          description: "Изменение цены покупки по сравнению с предыдущим курсом"
+        isFavorite:
+          type: boolean
+          description: "Определяет является ли валюта в избранном по умолчанию"
+
+    StreetRatesItems:
+      type: object
+      properties:
+        ccy:
+          type: string
+          description: "Обозначение валюты"
+        nominal:
+          type: string
+          description: "Nominal"
+        rate:
+          type: number
+          description: "Цена покупки"
+        diff:
+          type: number
+          description: "Изменение цены покупки по сравнению с предыдущим курсом"
+        rateSell:
+          type: number
+          description: "Цена продажи"
+        diffSell:
+          type: number
+          description: "Изменение цены продажи по сравнению с предыдущим курсом"
 
     StreetRatesHistoryResponse:
       type: object
@@ -482,6 +541,9 @@ components:
           description: Код указывающий на отсутствие ошибок или на их наличие
         history:
           type: array
+          items:
+            type: number
+            description: "Список изменения цены"
           description: Массив изменения цены для определенной криптовалюты
       example:
         code: 0
@@ -495,10 +557,54 @@ components:
           description: Код указывающий на отсутствие ошибок или на их наличие
         banks:
           type: array
+          items:
+            $ref: "#/components/schemas/BankListResponseItems"
           description: Массив объектов банков и информацию о каждом банке
       example:
         code: 0
         banks: [ { name: "Kapitalbank", logo: "data:image/png;base64,...", per_buy: 0.25, per_sell: 0.27, contacts: [ ], address: "Tashkent....", location: [ 0.000,1.1111 ], rates: [ "RUB","USD","EUR" ], site: "https://....",  isFavorite: true|false } ]
+
+    BankListResponseItems:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "Название банка"
+        logo:
+          type: string
+          description: "Логотип банка в формате data:image/..."
+        per_buy:
+          type: number
+          description: "Процент на который покупка валюты в банке отличается от курса ЦБ"
+        per_sell:
+          type: number
+          description: "Процент на который продажа валюты в банке отличается от курса ЦБ"
+        contacts:
+          type: array
+          items:
+            $ref: "#/components/schemas/BanksBranchesResponseItemsContacts"
+          description: "Контакты банка"
+        address:
+          type: string
+          description: "Адрес главного офиса банка"
+        location:
+          type: array
+          items:
+            type: number
+            description: "Первый элемент массива широта, второй элемент массива долгота"
+          description: "Координаты банка"
+        rates:
+          type: array
+          items:
+            type: string
+            description: "Список основных валют которые меняет банк"
+        site:
+          type: string
+          description: "Ссылка на сайт банка"
+        isFavorite:
+          type: boolean
+          description: "Определяет является ли банк в списке избранных по умолчанию"
+          default: false
 
     BankImageResponse:
       type: object
@@ -521,10 +627,45 @@ components:
           description: Код указывающий на отсутствие ошибок или на их наличие
         branches:
           type: array
+          items:
+            $ref: "#/components/schemas/BanksBranchesResponseItems"
           description: Изображение в формате data
       example:
         code: 0
         branches: [ { name: "Название филиала", address: "Адрес", working: "часы и дни работы", contacts: [ { type:"Phone", value:"+998..." } ], lat: 0, lng: 1 } ]
+
+    BanksBranchesResponseItems:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "Название филиала"
+        address:
+          type: string
+          description: "Адрес филиала"
+        working:
+          type: string
+          description: "Часы работы филиала"
+        contacts:
+          type: array
+          items:
+            $ref: "#/components/schemas/BanksBranchesResponseItemsContacts"
+          description: "Контакты филиала"
+        lat:
+          type: number
+          description: "latitude"
+        lng:
+          type: number
+          description: "longitude"
+    BanksBranchesResponseItemsContacts:
+      type: object
+      properties:
+        type:
+          type: string
+          description: "Тип контакта"
+        value:
+          type: string
+          description: "Сами данные контакта"
 
     CryptoListResponse:
       type: object
@@ -534,10 +675,46 @@ components:
           description: Код указывающий на отсутствие ошибок или на их наличие
         crypto:
           type: array
+          items:
+            $ref: "#/components/schemas/CryptoListResponseItems"
           description: Массив объектов криптовалют
       example:
         code: 0
         crypto: [ { name: "Bitcoin", symbol: "BTC", price: 25000.11, change: 2, high: 26000.1, low: 22000.5, image: "https://www.cryptocompare.com/....", isFavorite: true|false, active: true|false } ]
+
+    CryptoListResponseItems:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "Название криптовалюты"
+        symbol:
+          type: string
+          description: "Тикер криптовалюты"
+        price:
+          type: number
+          description: "Актуальная цена криптовалюты"
+        change:
+          type: number
+          description: "Изменение цены в процентах за 24 часа"
+        high:
+          type: number
+          description: "Максимальная цена за 24 часа"
+        low:
+          type: number
+          description: "Минимальная цена за 24 часа"
+        image:
+          type: string
+          description: "Логотип криптовалюты"
+        isFavorite:
+          type: boolean
+          description: "Определяет является ли криптовалюта фаворитом по умолчанию или нет"
+          default: false
+        active:
+          type: boolean
+          description: "Определяет активна криптовалюта или нет"
+          default: true
+
 
     CryptoHistoryResponse:
       type: object
@@ -547,10 +724,16 @@ components:
           description: Код указывающий на отсутствие ошибок или на их наличие
         history:
           type: array
+          items:
+            $ref: "#/components/schemas/CryptoHistoryResponseItems"
           description: Массив изменения цены для определенной криптовалюты
       example:
         code: 0
         history: [ 23000,22000,25000,65000 ]
+
+    CryptoHistoryResponseItems:
+      type: number
+      description: "Цена котировки"
 
     AdsRequest:
       type: object
@@ -570,6 +753,8 @@ components:
           description: Код указывающий на отсутствие ошибок или на их наличие
         ads:
           type: array
+          items:
+            $ref: "#/components/schemas/AdsResponseItems"
           description: Массив рекламных объявлений
       example:
         code: 1
@@ -593,7 +778,22 @@ components:
           description: Код указывающий на отсутствие ошибок или на их наличие
         ads:
           type: array
+          items:
+              $ref: "#/components/schemas/AdsResponseItems"
           description: Массив рекламных объявлений
       example:
         code: 1
         ads: [ { "link": "https://adslink", "image": "data:image/png;base64,...", "format": "full_screen" } ]
+
+    AdsResponseItems:
+      type: object
+      properties:
+        link:
+          type: string
+          description: "Ссылка на рекламную страницу"
+        image:
+          type: string
+          description: "Изображение рекламного объявления"
+        format:
+          type: string
+          description: "Формат рекламного объявления"
